@@ -1,0 +1,35 @@
+
+---------------------------------------------------------------------
+
+1 COMPROBANTE
+valor: valor_raider
+%	 : ((valor_raider / 100) * sub_total)
+
+---------------------------------------------------------------------
+
+2 PASAJERO ESPECIFICO (Igual tan solo que "sub_total" es el total del pasajero)
+valor: valor_raider
+%	 : ((valor_raider / 100) * precio_del_pasaj_base)
+
+---------------------------------------------------------------------
+
+3 PASAJERO GENERAL
+valor: (valor_raider * n_pasajeros)
+%	 : ((valor_raider / 100) * sub_total)
+
+---------------------------------------------------------------------
+
+4 POR DIA POR VOUCHER
+valor: (valor_raider * n_dias)
+%	 : (((valor_raider / 100) * sub_total) * n_dias)
+
+---------------------------------------------------------------------
+
+5 POR DIA POR PASAJERO
+valor: ((valor_raider * n_dias) * n_pasajeros_que_esten en rango de edad si no aplica a todos los que seleccione)
+%	 : ((((valor_raider / 100) * sub_total) * n_dias) * n_pasajeros_que_esten en rango de edad si no aplica a todos los que seleccione)
+
+
+
+
+valor_prima array_1439: {"valorMenor":"16.800","subTotalMenores":"29.400","valorMayor":"25.200","subTotalMayor":"0.000","costoMenor":"6.720","subTotalMenores_costo":"2.940","costoMayor":"10.080","subTotalMayor_costo":"0.000","netoMenor":"0.000","subTotalMenores_neto":"0.000","netoMayor":"0.000","subTotalMayor_neto":"0.000","numero_menores":2,"numero_mayores":0,"tiepoid":"1186","total":"29.400","total_costo":"2.940","total_neto":"0.000","name_plan":"test no usar","planfamiliar":0,"planpareja":1,"normal_age":"74","max_age":"85","min_age":"1","moneda_local":"N","tasa_cambio":0,"valore_USD":null,"idp":"1439","price_voucher":"1","family_plan":"Y","pareja_plan":"Y","factor_family":"2.50","maxFamilyCnt":"3","factor_family_cost":"2.50","factor_family_age":21,"activofactor":"no","factor_pareja":"1.75","activofactorpareja":"si","factor_pareja_cost":"1.75","moneda":"US$","overage_factor":"1.50","overage_factor_cost":"1.50"}

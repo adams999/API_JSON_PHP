@@ -1,0 +1,448 @@
+SELECT
+	tabTtest.id AS id_orden,
+	tabTtest.id_emision_type,
+	tabTtest.nombre_agencia,
+	tabTtest.fecha,
+	tabTtest.codigo,
+	tabTtest. STATUS,
+	tabTtest.nombre_contacto,
+	GROUP_CONCAT('  |  ', tabTtest.nombre) AS Nombre_Pasajeros,
+	tabTtest.cantidad AS Cant_Pasj,
+	SUM(tabTtest.ben_raider) AS raider_total,
+	SUM(tabTtest.ben_raider_cost) AS raider_costo,
+	sum(tabTtest.precio_vta) AS precio_vta,
+	sum(tabTtest.total_benef) AS total_benefit,
+	sum(tabTtest.precio_cost) AS total_costo_benefit,
+	sum(tabTtest.neto_cost) AS total_cost_benef_total,
+	sum(tabTtest.cupon_descto) AS descuento,
+	tabTtest.total,
+	tabTtest.neto_prov,
+	(
+		(
+			Sum(tabTtest.precio_vta) + SUM(tabTtest.ben_raider)
+		) - sum(tabTtest.cupon_descto)
+	) AS SumaTotal,
+	(
+		(
+			sum(tabTtest.precio_cost) + SUM(tabTtest.ben_raider_cost)
+		)
+	) AS SumaTotalCosto,
+	(
+		(
+			tabTtest.total - SUM(tabTtest.ben_raider) - sum(tabTtest.precio_vta)
+		) + sum(tabTtest.cupon_descto)
+	) AS Diff_de_tot,
+	(
+		(
+			sum(tabTtest.precio_vta) + SUM(tabTtest.ben_raider) - sum(tabTtest.cupon_descto)
+		) - sum(tabTtest.total_benef)
+	) AS Diff_total_neto_benef,
+	(
+		(
+			sum(tabTtest.precio_cost) + SUM(tabTtest.ben_raider_cost)
+		) - tabTtest.neto_prov
+	) AS Diff_cost_benef,
+	(
+		sum(tabTtest.neto_cost) - tabTtest.neto_prov
+	) AS Diff_cost_benef_total
+FROM
+	(
+		SELECT
+			orders.id,
+			id_emision_type,
+			nombre_agencia,
+			beneficiaries.id AS id_benefit,
+			orders.fecha,
+			orders.codigo,
+			orders. STATUS,
+			orders.cantidad,
+			orders.nombre_contacto,
+			beneficiaries.nombre,
+			beneficiaries.precio_cost,
+			beneficiaries.neto_cost,
+			IFNULL(
+				(
+					SELECT
+						SUM(
+							CASE orders_raider.id_beneft
+							WHEN beneficiaries.id THEN
+								value_raider
+							WHEN 0 THEN
+
+							IF (
+								ISNULL(beneficiaries.precio_vta),
+								0,
+								(
+									value_raider / IFNULL(
+										(
+											SELECT
+												COUNT(*)
+											FROM
+												beneficiaries ben
+											WHERE
+												ben.id_orden = orders.id
+											AND ben.precio_vta IS NOT NULL
+											AND ben.precio_vta > 0
+										),
+										cantidad
+									)
+								)
+							)
+							WHEN NULL THEN
+								(value_raider / cantidad)
+							ELSE
+								0
+							END
+						)
+					FROM
+						orders_raider
+					WHERE
+						orders_raider.id_orden = orders.id
+				),
+				0
+			) ben_raider,
+			IFNULL(
+				(
+					SELECT
+						SUM(
+							CASE orders_raider.id_beneft
+							WHEN beneficiaries.id THEN
+								cost_raider
+							WHEN 0 THEN
+
+							IF (
+								ISNULL(beneficiaries.precio_vta),
+								0,
+								(
+									cost_raider / IFNULL(
+										(
+											SELECT
+												COUNT(*)
+											FROM
+												beneficiaries ben
+											WHERE
+												ben.id_orden = orders.id
+											AND ben.precio_cost IS NOT NULL
+											AND ben.precio_cost > 0
+										),
+										cantidad
+									)
+								)
+							)
+							WHEN NULL THEN
+								(precio_cost / cantidad)
+							ELSE
+								0
+							END
+						)
+					FROM
+						orders_raider
+					WHERE
+						orders_raider.id_orden = orders.id
+				),
+				0
+			) ben_raider_cost,
+			total_neto_benefit,
+			precio_vta,
+			(
+				IFNULL(cupon_descto, 0) / cantidad
+			) AS cupon_descto,
+			cupon_descto AS desc_tot,
+			orders.total,
+			total_neto_benefit AS total_benef,
+			neto_cost AS total_neto_cost,
+			orders.neto_prov
+		FROM
+			orders
+		INNER JOIN beneficiaries ON orders.id = beneficiaries.id_orden
+		AND beneficiaries.ben_status = 1
+		WHERE
+			orders.fecha BETWEEN '2018-01-01'
+		AND '2021-12-31'
+	) AS tabTtest
+GROUP BY
+	tabTtest.id
+HAVING
+	(
+		(
+			(tabTtest.total - SumaTotal) > 0.01
+		)
+		OR (
+			(tabTtest.total - SumaTotal) < - 0.01
+		)
+		OR (
+			(SumaTotal - total_benefit) > 0.01
+		)
+		OR (
+			(SumaTotal - total_benefit) < - 0.01
+		)
+		OR (
+			(
+				tabTtest.neto_prov - SumaTotalCosto
+			) > 0.01
+		)
+		OR (
+			(
+				tabTtest.neto_prov - SumaTotalCosto
+			) < - 0.01
+		)
+		OR (
+			(
+				tabTtest.neto_prov - total_cost_benef_total
+			) > 0.01
+		)
+		OR (
+			(
+				tabTtest.neto_prov - total_cost_benef_total
+			) < - 0.01
+		)
+	)
+ORDER BY
+	fecha DESC
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------VERSION MEJORADA---------------------------------------
+SELECT
+	tabTtest.id AS id_orden,
+	tabTtest.id_emision_type,
+	tabTtest.nombre_agencia,
+	tabTtest.fecha,
+	tabTtest.codigo,
+	tabTtest. STATUS,
+	tabTtest.nombre_contacto,
+	GROUP_CONCAT('  |  ', tabTtest.nombre) AS Nombre_Pasajeros,
+	tabTtest.cantidad AS Cant_Pasj,
+	SUM(tabTtest.ben_raider) AS raider_total,
+	SUM(tabTtest.ben_raider_cost) AS raider_costo,
+	sum(tabTtest.precio_vta) AS precio_vta,
+	sum(tabTtest.total_benef) AS total_benefit,
+	sum(tabTtest.precio_cost) AS total_costo_benefit,
+	sum(tabTtest.neto_cost) AS total_cost_benef_total,
+	sum(tabTtest.cupon_descto) AS descuento,
+	tabTtest.total,
+	tabTtest.neto_prov,
+	(
+		(
+			Sum(tabTtest.precio_vta) + SUM(tabTtest.ben_raider)
+		) - sum(tabTtest.cupon_descto)
+	) AS SumaTotal,
+	(
+		(
+			sum(tabTtest.precio_cost) + SUM(tabTtest.ben_raider_cost)
+		)
+	) AS SumaTotalCosto,
+	(
+		(
+			tabTtest.total - SUM(tabTtest.ben_raider) - sum(tabTtest.precio_vta)
+		) + sum(tabTtest.cupon_descto)
+	) AS Diff_de_tot,
+	(
+		(
+			sum(tabTtest.precio_vta) + SUM(tabTtest.ben_raider) - sum(tabTtest.cupon_descto)
+		) - sum(tabTtest.total_benef)
+	) AS Diff_total_neto_benef,
+	(
+		(
+			sum(tabTtest.precio_cost) + SUM(tabTtest.ben_raider_cost)
+		) - tabTtest.neto_prov
+	) AS Diff_cost_benef,
+	(
+		sum(tabTtest.neto_cost) - tabTtest.neto_prov
+	) AS Diff_cost_benef_total
+FROM
+	(
+		SELECT
+			orders.id,
+			id_emision_type,
+			nombre_agencia,
+			beneficiaries.id AS id_benefit,
+			orders.fecha,
+			orders.codigo,
+			orders. STATUS,
+			orders.cantidad,
+			orders.nombre_contacto,
+			beneficiaries.nombre,
+			IFNULL(
+				beneficiaries.precio_cost,
+				0
+			) AS precio_cost,
+			IFNULL(beneficiaries.neto_cost, 0) AS neto_cost,
+			IFNULL(
+				(
+					SELECT
+						SUM(
+							CASE orders_raider.id_beneft
+							WHEN beneficiaries.id THEN
+								value_raider
+							WHEN 0 THEN
+
+							IF (
+								ISNULL(beneficiaries.precio_vta),
+								0,
+								(
+									value_raider / IFNULL(
+										(
+											SELECT
+												COUNT(*)
+											FROM
+												beneficiaries ben
+											WHERE
+												ben.id_orden = orders.id
+											AND ben.precio_vta IS NOT NULL
+											AND ben.precio_vta > 0
+										),
+										cantidad
+									)
+								)
+							)
+							WHEN NULL THEN
+								(value_raider / cantidad)
+							ELSE
+								0
+							END
+						)
+					FROM
+						orders_raider
+					WHERE
+						orders_raider.id_orden = orders.id
+				),
+				0
+			) ben_raider,
+			IFNULL(
+				(
+					SELECT
+						SUM(
+							CASE orders_raider.id_beneft
+							WHEN beneficiaries.id THEN
+								cost_raider
+							WHEN 0 THEN
+
+							IF (
+								ISNULL(beneficiaries.precio_vta),
+								0,
+								(
+									cost_raider / IFNULL(
+										(
+											SELECT
+												COUNT(*)
+											FROM
+												beneficiaries ben
+											WHERE
+												ben.id_orden = orders.id
+											AND ben.precio_cost IS NOT NULL
+											AND ben.precio_cost > 0
+										),
+										cantidad
+									)
+								)
+							)
+							WHEN NULL THEN
+								(precio_cost / cantidad)
+							ELSE
+								0
+							END
+						)
+					FROM
+						orders_raider
+					WHERE
+						orders_raider.id_orden = orders.id
+				),
+				0
+			) ben_raider_cost,
+			IFNULL(total_neto_benefit, 0) AS total_neto_benefit,
+			IFNULL(precio_vta, 0) AS precio_vta,
+			(
+				IFNULL(cupon_descto, 0) / cantidad
+			) AS cupon_descto,
+			IFNULL(cupon_descto, 0) AS desc_tot,
+			orders.total,
+			IFNULL(total_neto_benefit, 0) AS total_benef,
+			IFNULL(neto_cost, 0) AS total_neto_cost,
+			IFNULL(orders.neto_prov, 0) AS neto_prov
+		FROM
+			orders
+		INNER JOIN beneficiaries ON orders.id = beneficiaries.id_orden
+		AND beneficiaries.ben_status = 1
+		WHERE
+			orders.fecha BETWEEN '2021-01-01'
+		AND '2021-12-31'
+	) AS tabTtest
+GROUP BY
+	tabTtest.id
+HAVING
+	(
+		(
+			(tabTtest.total - SumaTotal) > 0.01
+		)
+		OR (
+			(tabTtest.total - SumaTotal) < - 0.01
+		)
+		OR (
+			(SumaTotal - total_benefit) > 0.01
+		)
+		OR (
+			(SumaTotal - total_benefit) < - 0.01
+		)
+		OR (
+			(
+				tabTtest.neto_prov - SumaTotalCosto
+			) > 0.01
+		)
+		OR (
+			(
+				tabTtest.neto_prov - SumaTotalCosto
+			) < - 0.01
+		)
+		OR (
+			(
+				tabTtest.neto_prov - total_cost_benef_total
+			) > 0.01
+		)
+		OR (
+			(
+				tabTtest.neto_prov - total_cost_benef_total
+			) < - 0.01
+		)
+	)
+ORDER BY
+	fecha DESC

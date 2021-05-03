@@ -1,0 +1,9 @@
+SELECT
+table_name AS "Tabla",
+ROUND(((data_length + index_length) / 1024 / 1024),2) AS "Tamaño (MB)"
+FROM
+information_schema. TABLES
+WHERE
+table_schema = "cacao1ls_bd0"
+ORDER BY
+(data_length + index_length) DESC

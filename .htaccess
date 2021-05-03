@@ -1,0 +1,5 @@
+Header set Access-Control-Allow-Origin "*"
+ErrorDocument 404 https://ilsbsys.com/app/api/v1/error
+RewriteEngine On
+RewriteRule ^([a-zA-Z_-]*)$ service.php?function=$1  [QSA,L]
+
